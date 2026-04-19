@@ -1,4 +1,3 @@
-#Добавление информации в базу данных
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from db.models import Base, User, Pet, Note

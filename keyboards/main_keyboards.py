@@ -1,4 +1,3 @@
-#Настройка кнопок
 from aiogram import types
 
 

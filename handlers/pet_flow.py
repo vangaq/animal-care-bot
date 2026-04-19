@@ -1,4 +1,3 @@
-#Все в разделе питомцы
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -21,7 +20,6 @@ class EditPetStates(StatesGroup):
     waiting_field_choice = State()
     waiting_new_value = State()
 
-#Кнопка "Добавить питомца"
 async def start_add_pet(message: types.Message, state: FSMContext):
     if message.text.lower() != "добавить питомца":
         return
@@ -111,7 +109,6 @@ async def pet_confirm(message: types.Message, state: FSMContext):
         await message.answer("Операция отменена.", reply_markup=back_to_main_keyboard())
         await state.clear()
 
-#Кнопка "Изменить заметку"
 async def start_edit_pet(message: types.Message, state: FSMContext):
     if message.text.lower() != "изменить информацию о питомце":
         return

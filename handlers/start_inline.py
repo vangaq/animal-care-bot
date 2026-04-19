@@ -3,7 +3,6 @@ from db import requests as dbreq
 from keyboards.main_keyboards import main_reply_keyboard
 from utils.helpers import make_response_ok
 
-#Функция "/start"
 async def cmd_start(message: types.Message):
     resp = await dbreq.get_or_create_user(message.from_user.id)
     if resp["status"] == "ok":
@@ -14,7 +13,6 @@ async def cmd_start(message: types.Message):
     else:
         await message.answer("Ошибка при создании профиля: " + resp.get("error_msg", "unknown"))
 
-#Функция "/inline"
 async def cmd_inline(message: types.Message):
     inline_links = [
         {"title": "Документация по кошкам", "url": "https://example.com/cats"},

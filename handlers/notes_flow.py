@@ -1,4 +1,3 @@
-#Все с заметками
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -18,7 +17,6 @@ class NoteStates(StatesGroup):
     waiting_extra = State()
     confirm = State()
 
-#Кнопки в разделе "Заметки"
 async def start_notes(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer(
@@ -32,7 +30,6 @@ async def start_notes(message: types.Message, state: FSMContext):
         )
     )
 
-#Кнопка "Добавить заметку"
 async def start_add_note(message: types.Message, state: FSMContext):
     if message.text.lower() != "добавить заметку":
         return
@@ -146,7 +143,6 @@ async def note_confirm(message: types.Message, state: FSMContext):
             await message.answer("Ошибка: " + resp.get("error_msg", ""))
 
         await state.clear()
-#Кнопка "Изменить заметку"
     elif text == "изменить":
         await message.answer("Введите название заметки заново:", reply_markup=types.ReplyKeyboardRemove())
         await state.set_state(NoteStates.waiting_title)

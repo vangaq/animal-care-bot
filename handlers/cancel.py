@@ -1,4 +1,3 @@
-#Глобальная кнопка "Отмена"/"На главную"
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from keyboards.main_keyboards import main_reply_keyboard
