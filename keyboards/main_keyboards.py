@@ -7,6 +7,7 @@ def main_reply_keyboard() -> types.ReplyKeyboardMarkup:
         keyboard=[
             [types.KeyboardButton(text="О нас"), types.KeyboardButton(text="Профиль")],
             [types.KeyboardButton(text="Заметки"), types.KeyboardButton(text="Карта")],
+            [types.KeyboardButton(text="Посоветоваться с AI")],
         ],
         resize_keyboard=True,
     )

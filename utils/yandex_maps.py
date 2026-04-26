@@ -60,7 +60,7 @@ def _http_get_json(base_url: str, params: dict[str, Any]) -> dict[str, Any]:
     url = f"{base_url}?{query}"
 
     try:
-        with urlopen(url, timeout=20) as response:
+        with urlopen(url, timeout=20) as response:  # nosec B310 - URL формируется из констант
             payload = response.read().decode("utf-8")
     except HTTPError as error:
         payload = error.read().decode("utf-8", errors="replace")
@@ -89,7 +89,7 @@ def _http_get_bytes(base_url: str, params: dict[str, Any]) -> bytes:
     url = f"{base_url}?{query}"
 
     try:
-        with urlopen(url, timeout=20) as response:
+        with urlopen(url, timeout=20) as response:  # nosec B310 - URL формируется из констант
             return response.read()
     except HTTPError as error:
         payload = error.read().decode("utf-8", errors="replace")

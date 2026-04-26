@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
 from db.requests import init_db
 from handlers.about import about_project
+from handlers.ai_chat import AIChatStates, process_ai_message, start_ai_chat
 from handlers.cancel import cancel_handler
 from handlers.notes_flow import (
     DeleteNoteStates,
@@ -67,7 +68,6 @@ from handlers.vet_clinics import (
     start_maps_menu,
 )
 
-
 logging.basicConfig(level=logging.INFO)
 
 if not BOT_TOKEN:
@@ -75,18 +75,19 @@ if not BOT_TOKEN:
         "BOT_TOKEN не задан. Создайте файл .env и укажите в нём BOT_TOKEN=..."
     )
 
+# Создаём объекты бота и диспетчера.
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 init_db()
 
-
 dp.message.register(cmd_start, Command(commands=["start"]))
 dp.message.register(cmd_inline, Command(commands=["inline"]))
 
-
 dp.message.register(cancel_handler, F.text.casefold() == "на главную", StateFilter("*"))
 
+dp.message.register(start_ai_chat, F.text.casefold() == "посоветоваться с ai", StateFilter("*"))
+dp.message.register(process_ai_message, AIChatStates.waiting_question)
 
 dp.message.register(start_add_pet, F.text.casefold() == "добавить питомца", StateFilter("*"))
 dp.message.register(pet_breed, PetStates.waiting_breed, F.text)
@@ -98,7 +99,6 @@ dp.message.register(pet_photo_text, PetStates.waiting_photo, F.text)
 dp.message.register(pet_photo_input, PetStates.waiting_photo, F.photo)
 dp.message.register(pet_confirm, PetStates.confirm, F.text)
 
-
 dp.message.register(
     start_edit_pet,
     F.text.casefold() == "изменить информацию о питомце",
@@ -109,11 +109,9 @@ dp.message.register(field_choice, EditPetStates.waiting_field_choice, F.text)
 dp.message.register(new_value_input, EditPetStates.waiting_new_value, F.text)
 dp.message.register(new_pet_photo_input, EditPetStates.waiting_new_photo, F.photo)
 
-
 dp.message.register(start_delete_pet, F.text.casefold() == "удалить питомца", StateFilter("*"))
 dp.message.register(choose_pet_to_delete, DeletePetStates.waiting_choose_pet, F.text)
 dp.message.register(confirm_pet_delete, DeletePetStates.waiting_confirm, F.text)
-
 
 dp.message.register(start_notes, F.text.casefold() == "заметки", StateFilter("*"))
 dp.message.register(start_add_note, F.text.casefold() == "добавить заметку")
@@ -139,7 +137,6 @@ dp.message.register(delete_note_choose_pet, DeleteNoteStates.waiting_pet, F.text
 dp.message.register(delete_note_choose_note, DeleteNoteStates.waiting_note, F.text)
 dp.message.register(delete_note_confirm, DeleteNoteStates.waiting_confirm, F.text)
 
-
 dp.message.register(start_maps_menu, F.text.casefold() == "карта", StateFilter("*"))
 dp.message.register(
     start_category_search,
@@ -148,7 +145,6 @@ dp.message.register(
 )
 dp.message.register(process_user_location, MapSearchStates.waiting_location, F.location)
 dp.message.register(process_user_address, MapSearchStates.waiting_location, F.text)
-
 
 dp.message.register(about_project, F.text.casefold() == "о нас", StateFilter("*"))
 

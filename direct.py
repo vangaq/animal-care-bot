@@ -13,6 +13,7 @@ file_dict = {
 }
 
 
+
 def read_files(file_names):
     combined_content = ""
 
