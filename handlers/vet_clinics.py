@@ -8,7 +8,6 @@ from aiogram.fsm.state import State, StatesGroup
 
 from config import (
     YANDEX_GEOCODER_API_KEY,
-    YANDEX_MAPS_API_KEY,
     YANDEX_PLACES_API_KEY,
 )
 from keyboards.main_keyboards import (
@@ -22,7 +21,6 @@ from utils.yandex_maps import (
     build_places_payload,
     geocode_address,
 )
-
 
 MAP_CATEGORIES: dict[str, dict[str, str]] = {
     "ветклиники рядом": {
@@ -47,7 +45,6 @@ MAP_CATEGORIES: dict[str, dict[str, str]] = {
 
 
 class MapSearchStates(StatesGroup):
-
     waiting_location = State()
 
 
@@ -92,7 +89,7 @@ async def process_user_location(message: types.Message, state: FSMContext):
 
 
 async def process_user_address(message: types.Message, state: FSMContext):
-    geocoder_key = YANDEX_GEOCODER_API_KEY or YANDEX_MAPS_API_KEY
+    geocoder_key = YANDEX_GEOCODER_API_KEY
 
     address_text = (message.text or "").strip()
     if not address_text:
@@ -120,7 +117,7 @@ async def process_user_address(message: types.Message, state: FSMContext):
             f"Причина: {error}"
         )
         return
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 - пользователю нужен понятный ответ
         await wait_message.edit_text(
             "Не удалось обработать введённый адрес.\n\n"
             f"Причина: {error}"
@@ -138,11 +135,11 @@ async def process_user_address(message: types.Message, state: FSMContext):
 
 
 async def _process_places_search(
-    message: types.Message,
-    state: FSMContext,
-    latitude: float,
-    longitude: float,
-    address_line: str,
+        message: types.Message,
+        state: FSMContext,
+        latitude: float,
+        longitude: float,
+        address_line: str,
 ):
     data = await state.get_data()
     category_key = data.get("category_key")
@@ -155,8 +152,8 @@ async def _process_places_search(
         await state.clear()
         return
 
-    geocoder_key = YANDEX_GEOCODER_API_KEY or YANDEX_MAPS_API_KEY
-    places_key = YANDEX_PLACES_API_KEY or YANDEX_MAPS_API_KEY
+    geocoder_key = YANDEX_GEOCODER_API_KEY
+    places_key = YANDEX_PLACES_API_KEY
 
     if not places_key:
         await message.answer(
@@ -183,7 +180,7 @@ async def _process_places_search(
             fallback_name=category["fallback_name"],
             origin_address=address_line,
         )
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 - пользователю нужен понятный ответ
         await wait_message.edit_text(
             "Не удалось получить данные от Яндекс.Карт.\n\n"
             f"Причина: {error}\n\n"

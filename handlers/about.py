@@ -1,3 +1,5 @@
+"""Обработчик раздела 'О нас'."""
+
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 

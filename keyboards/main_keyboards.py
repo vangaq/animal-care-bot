@@ -1,7 +1,6 @@
 from aiogram import types
 
 
-
 def main_reply_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
@@ -13,7 +12,6 @@ def main_reply_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-
 def back_to_main_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
@@ -23,17 +21,15 @@ def back_to_main_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-
 def profile_options_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
             [types.KeyboardButton(text="Посмотреть профиль"), types.KeyboardButton(text="Добавить питомца")],
-            [types.KeyboardButton(text="Изменить информацию о питомце"), types.KeyboardButton(text="Удалить питомца")],
+            [types.KeyboardButton(text="Изм. данные питомца"), types.KeyboardButton(text="Удалить питомца")],
             [types.KeyboardButton(text="На главную")],
         ],
         resize_keyboard=True,
     )
-
 
 
 def pet_confirm_keyboard() -> types.ReplyKeyboardMarkup:
@@ -47,7 +43,6 @@ def pet_confirm_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-
 def note_period_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
@@ -59,7 +54,6 @@ def note_period_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-
 def notes_menu_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
@@ -68,7 +62,6 @@ def notes_menu_keyboard() -> types.ReplyKeyboardMarkup:
         ],
         resize_keyboard=True,
     )
-
 
 
 def map_categories_keyboard() -> types.ReplyKeyboardMarkup:
@@ -82,7 +75,6 @@ def map_categories_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-
 def map_input_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
@@ -92,7 +84,6 @@ def map_input_keyboard() -> types.ReplyKeyboardMarkup:
         resize_keyboard=True,
         one_time_keyboard=True,
     )
-
 
 
 def location_request_keyboard() -> types.ReplyKeyboardMarkup:

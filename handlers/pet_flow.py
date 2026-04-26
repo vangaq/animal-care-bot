@@ -169,7 +169,7 @@ async def pet_confirm(message: types.Message, state: FSMContext):
 
 
 async def start_edit_pet(message: types.Message, state: FSMContext):
-    if message.text.lower() != "изменить информацию о питомце":
+    if message.text.lower() != "изм. данные питомца":
         return
 
     user_response = await dbreq.get_user_by_telegram(message.from_user.id)

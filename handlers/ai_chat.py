@@ -9,7 +9,6 @@ from utils.ai_client import ask_local_ai
 
 
 class AIChatStates(StatesGroup):
-
     waiting_question = State()
 
 

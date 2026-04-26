@@ -13,6 +13,7 @@ GEOCODER_URL = "https://geocode-maps.yandex.ru/v1"
 PLACES_URL = "https://search-maps.yandex.ru/v1"
 STATIC_MAPS_URL = "https://static-maps.yandex.ru/1.x"
 
+# Набор областей поиска: от маленькой к более широкой.
 SEARCH_SPANS = [
     (0.03, 0.03, 15),
     (0.06, 0.06, 14),

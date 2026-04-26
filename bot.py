@@ -75,7 +75,6 @@ if not BOT_TOKEN:
         "BOT_TOKEN не задан. Создайте файл .env и укажите в нём BOT_TOKEN=..."
     )
 
-# Создаём объекты бота и диспетчера.
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -101,7 +100,7 @@ dp.message.register(pet_confirm, PetStates.confirm, F.text)
 
 dp.message.register(
     start_edit_pet,
-    F.text.casefold() == "изменить информацию о питомце",
+    F.text.casefold() == "изм. данные питомца",
     StateFilter("*"),
 )
 dp.message.register(choose_pet_to_edit, EditPetStates.waiting_choose_pet, F.text)

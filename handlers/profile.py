@@ -1,4 +1,5 @@
 from aiogram import types
+from datetime import datetime
 
 from db import requests as dbreq
 from keyboards.main_keyboards import (
@@ -6,6 +7,11 @@ from keyboards.main_keyboards import (
     main_reply_keyboard,
     profile_options_keyboard,
 )
+
+
+def format_created_at(value: str) -> str:
+    dt = datetime.fromisoformat(value)
+    return dt.strftime("%d.%m.%Y %H:%M")
 
 
 async def on_text_profile(message: types.Message):
@@ -41,7 +47,7 @@ async def on_text_profile(message: types.Message):
                 f"Возраст: {pet['age']}\n"
                 f"Доп. информация: {pet['extra_info'] or '-'}\n"
                 f"Фото: {'есть' if pet['photo_file_id'] else 'нет'}\n"
-                f"Создан: {pet['created_at']}"
+                f"Создан: {format_created_at(pet['created_at'])}"
             )
 
             if pet["photo_file_id"]:
@@ -67,4 +73,4 @@ async def on_text_profile(message: types.Message):
             else:
                 await message.answer(f"У питомца {pet['name']} заметки отсутствуют.")
 
-        await message.answer("", reply_markup=main_reply_keyboard())
+        await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
