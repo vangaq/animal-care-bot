@@ -15,6 +15,7 @@ VALID_PERIODS = {"Не повторять", "6 ч", "День", "Неделя", 
 
 
 class NoteStates(StatesGroup):
+
     waiting_pet = State()
     waiting_title = State()
     waiting_period = State()
@@ -24,6 +25,7 @@ class NoteStates(StatesGroup):
 
 
 class EditNoteStates(StatesGroup):
+
     waiting_pet = State()
     waiting_note = State()
     waiting_field = State()
@@ -33,6 +35,7 @@ class EditNoteStates(StatesGroup):
 
 
 class DeleteNoteStates(StatesGroup):
+
     waiting_pet = State()
     waiting_note = State()
     waiting_confirm = State()
@@ -96,11 +99,11 @@ async def show_note_summary(message: types.Message, state: FSMContext):
 
 
 async def show_notes_for_pet_keyboard(
-        message: types.Message,
-        state: FSMContext,
-        pet_id: int,
-        next_state: State,
-        ask_text: str,
+    message: types.Message,
+    state: FSMContext,
+    pet_id: int,
+    next_state: State,
+    ask_text: str,
 ):
     notes_response = await dbreq.list_notes_for_pet(pet_id)
     if notes_response["status"] != "ok":
@@ -123,6 +126,7 @@ async def show_notes_for_pet_keyboard(
     )
     await state.set_state(next_state)
     return True
+
 
 
 def parse_note_id_from_button(text: str) -> int | None:

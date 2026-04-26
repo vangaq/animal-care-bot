@@ -8,6 +8,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, quote_plus
 from urllib.request import urlopen
 
+
 GEOCODER_URL = "https://geocode-maps.yandex.ru/v1"
 PLACES_URL = "https://search-maps.yandex.ru/v1"
 STATIC_MAPS_URL = "https://static-maps.yandex.ru/1.x"
@@ -22,7 +23,6 @@ SEARCH_SPANS = [
 
 @dataclass(slots=True)
 class NearbyPlace:
-    """Краткая информация о найденной организации рядом."""
     name: str
     address: str
     latitude: float
@@ -100,10 +100,10 @@ def _http_get_bytes(base_url: str, params: dict[str, Any]) -> bytes:
 
 
 def _haversine_distance_meters(
-        latitude_1: float,
-        longitude_1: float,
-        latitude_2: float,
-        longitude_2: float,
+    latitude_1: float,
+    longitude_1: float,
+    latitude_2: float,
+    longitude_2: float,
 ) -> float:
     radius = 6_371_000
 
@@ -187,10 +187,10 @@ def geocode_address(api_key: str, address: str) -> dict[str, Any]:
 
     meta = geo_object.get("metaDataProperty", {}).get("GeocoderMetaData", {})
     formatted_address = (
-            meta.get("Address", {}).get("formatted")
-            or meta.get("text")
-            or geo_object.get("name")
-            or clean_address
+        meta.get("Address", {}).get("formatted")
+        or meta.get("text")
+        or geo_object.get("name")
+        or clean_address
     )
 
     return {
@@ -201,12 +201,12 @@ def geocode_address(api_key: str, address: str) -> dict[str, Any]:
 
 
 def find_nearest_places(
-        api_key: str,
-        latitude: float,
-        longitude: float,
-        search_text: str,
-        fallback_name: str,
-        limit: int = 5,
+    api_key: str,
+    latitude: float,
+    longitude: float,
+    search_text: str,
+    fallback_name: str,
+    limit: int = 5,
 ) -> tuple[list[NearbyPlace], int]:
     if not api_key:
         raise YandexMapsConfigError(
@@ -301,9 +301,9 @@ def find_nearest_places(
 
 
 def _build_static_map_viewport(
-        latitude: float,
-        longitude: float,
-        places: list[NearbyPlace],
+    latitude: float,
+    longitude: float,
+    places: list[NearbyPlace],
 ) -> tuple[str, str]:
     longitudes = [longitude, *[place.longitude for place in places]]
     latitudes = [latitude, *[place.latitude for place in places]]
@@ -312,6 +312,7 @@ def _build_static_map_viewport(
     max_lon = max(longitudes)
     min_lat = min(latitudes)
     max_lat = max(latitudes)
+
     center_lon = (min_lon + max_lon) / 2
     center_lat = (min_lat + max_lat) / 2
 
@@ -322,9 +323,9 @@ def _build_static_map_viewport(
 
 
 def build_static_map_bytes(
-        latitude: float,
-        longitude: float,
-        places: list[NearbyPlace],
+    latitude: float,
+    longitude: float,
+    places: list[NearbyPlace],
 ) -> bytes:
     ll, spn = _build_static_map_viewport(latitude, longitude, places)
 
@@ -346,10 +347,10 @@ def build_static_map_bytes(
 
 
 def build_interactive_map_url(
-        latitude: float,
-        longitude: float,
-        zoom: int,
-        search_text: str,
+    latitude: float,
+    longitude: float,
+    zoom: int,
+    search_text: str,
 ) -> str:
     query = urlencode(
         {
@@ -363,13 +364,13 @@ def build_interactive_map_url(
 
 
 def build_places_payload(
-        geocoder_api_key: str,
-        places_api_key: str,
-        latitude: float,
-        longitude: float,
-        search_text: str,
-        fallback_name: str,
-        origin_address: str = "",
+    geocoder_api_key: str,
+    places_api_key: str,
+    latitude: float,
+    longitude: float,
+    search_text: str,
+    fallback_name: str,
+    origin_address: str = "",
 ) -> dict[str, Any]:
     address = origin_address or reverse_geocode(
         api_key=geocoder_api_key,
@@ -414,10 +415,10 @@ def build_places_payload(
 
 
 def build_vet_clinics_payload(
-        geocoder_api_key: str,
-        places_api_key: str,
-        latitude: float,
-        longitude: float,
+    geocoder_api_key: str,
+    places_api_key: str,
+    latitude: float,
+    longitude: float,
 ) -> dict[str, Any]:
     return build_places_payload(
         geocoder_api_key=geocoder_api_key,

@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
 from db.requests import init_db
 from handlers.about import about_project
+from handlers.ai_chat import AIChatStates, process_ai_message, start_ai_chat
 from handlers.cancel import cancel_handler
 from handlers.notes_flow import (
     DeleteNoteStates,
@@ -74,6 +75,7 @@ if not BOT_TOKEN:
         "BOT_TOKEN не задан. Создайте файл .env и укажите в нём BOT_TOKEN=..."
     )
 
+# Создаём объекты бота и диспетчера.
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
@@ -83,6 +85,9 @@ dp.message.register(cmd_start, Command(commands=["start"]))
 dp.message.register(cmd_inline, Command(commands=["inline"]))
 
 dp.message.register(cancel_handler, F.text.casefold() == "на главную", StateFilter("*"))
+
+dp.message.register(start_ai_chat, F.text.casefold() == "посоветоваться с ai", StateFilter("*"))
+dp.message.register(process_ai_message, AIChatStates.waiting_question)
 
 dp.message.register(start_add_pet, F.text.casefold() == "добавить питомца", StateFilter("*"))
 dp.message.register(pet_breed, PetStates.waiting_breed, F.text)

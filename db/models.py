@@ -7,6 +7,7 @@ Base = declarative_base()
 
 
 class User(Base):
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
@@ -19,6 +20,7 @@ class User(Base):
 
 
 class Pet(Base):
+
     __tablename__ = "pets"
 
     __table_args__ = (
@@ -42,6 +44,7 @@ class Pet(Base):
 
 
 class Note(Base):
+
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True)

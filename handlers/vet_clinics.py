@@ -23,6 +23,7 @@ from utils.yandex_maps import (
     geocode_address,
 )
 
+
 MAP_CATEGORIES: dict[str, dict[str, str]] = {
     "ветклиники рядом": {
         "title": "ветеринарные клиники",
@@ -46,6 +47,7 @@ MAP_CATEGORIES: dict[str, dict[str, str]] = {
 
 
 class MapSearchStates(StatesGroup):
+
     waiting_location = State()
 
 
@@ -136,11 +138,11 @@ async def process_user_address(message: types.Message, state: FSMContext):
 
 
 async def _process_places_search(
-        message: types.Message,
-        state: FSMContext,
-        latitude: float,
-        longitude: float,
-        address_line: str,
+    message: types.Message,
+    state: FSMContext,
+    latitude: float,
+    longitude: float,
+    address_line: str,
 ):
     data = await state.get_data()
     category_key = data.get("category_key")
@@ -181,7 +183,7 @@ async def _process_places_search(
             fallback_name=category["fallback_name"],
             origin_address=address_line,
         )
-    except Exception as error:  # noqa: BLE001 - пользователю нужен понятный ответ
+    except Exception as error:
         await wait_message.edit_text(
             "Не удалось получить данные от Яндекс.Карт.\n\n"
             f"Причина: {error}\n\n"

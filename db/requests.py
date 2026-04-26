@@ -26,6 +26,7 @@ def serialize_pet(pet: Pet) -> dict:
     }
 
 
+
 def serialize_note(note: Note) -> dict:
     return {
         "id": note.id,
@@ -36,6 +37,7 @@ def serialize_note(note: Note) -> dict:
         "photo_file_id": note.photo_file_id or "",
         "created_at": note.created_at.isoformat(),
     }
+
 
 
 def ensure_schema():
@@ -88,6 +90,7 @@ def get_or_create_user_sync(telegram_id: int):
         session.close()
 
 
+
 def get_user_by_telegram_sync(telegram_id: int):
     session = SessionLocal()
     try:
@@ -118,13 +121,14 @@ def list_pets_for_user_sync(user_id: int):
         session.close()
 
 
+
 def create_pet_sync(
-        user_id: int,
-        breed: str,
-        name: str,
-        age: str,
-        extra_info: str | None = None,
-        photo_file_id: str | None = None,
+    user_id: int,
+    breed: str,
+    name: str,
+    age: str,
+    extra_info: str | None = None,
+    photo_file_id: str | None = None,
 ):
     if not (breed and name and age):
         return make_response_error("Обязательные поля для питомца не заполнены (breed, name, age).")
@@ -155,6 +159,7 @@ def create_pet_sync(
         session.close()
 
 
+
 def get_pet_by_id_sync(pet_id: int):
     session = SessionLocal()
     try:
@@ -165,6 +170,7 @@ def get_pet_by_id_sync(pet_id: int):
         return make_response_ok({"pet": serialize_pet(pet)})
     finally:
         session.close()
+
 
 
 def update_pet_field_sync(pet_id: int, field: str, value: str | None):
@@ -201,6 +207,7 @@ def update_pet_field_sync(pet_id: int, field: str, value: str | None):
         session.close()
 
 
+
 def delete_pet_sync(pet_id: int):
     session = SessionLocal()
     try:
@@ -227,12 +234,13 @@ def list_notes_for_pet_sync(pet_id: int):
         session.close()
 
 
+
 def create_note_sync(
-        pet_id: int,
-        title: str,
-        period: str,
-        extra_info: str | None = None,
-        photo_file_id: str | None = None,
+    pet_id: int,
+    title: str,
+    period: str,
+    extra_info: str | None = None,
+    photo_file_id: str | None = None,
 ):
     if not (title and period):
         return make_response_error("Обязательные поля для заметки не заполнены (title, period).")
@@ -267,6 +275,7 @@ def create_note_sync(
         session.close()
 
 
+
 def get_note_by_id_sync(note_id: int):
     session = SessionLocal()
     try:
@@ -277,6 +286,7 @@ def get_note_by_id_sync(note_id: int):
         return make_response_ok({"note": serialize_note(note)})
     finally:
         session.close()
+
 
 
 def delete_note_sync(note_id: int):
@@ -294,6 +304,7 @@ def delete_note_sync(note_id: int):
         return make_response_error(f"DB error: {error}")
     finally:
         session.close()
+
 
 
 def update_note_field_sync(note_id: int, field: str, value: str | None):
@@ -337,12 +348,12 @@ async def list_pets_for_user(user_id: int):
 
 
 async def create_pet(
-        user_id: int,
-        breed: str,
-        name: str,
-        age: str,
-        extra_info: str | None = None,
-        photo_file_id: str | None = None,
+    user_id: int,
+    breed: str,
+    name: str,
+    age: str,
+    extra_info: str | None = None,
+    photo_file_id: str | None = None,
 ):
     return await asyncio.to_thread(create_pet_sync, user_id, breed, name, age, extra_info, photo_file_id)
 
@@ -364,11 +375,11 @@ async def list_notes_for_pet(pet_id: int):
 
 
 async def create_note(
-        pet_id: int,
-        title: str,
-        period: str,
-        extra_info: str | None = None,
-        photo_file_id: str | None = None,
+    pet_id: int,
+    title: str,
+    period: str,
+    extra_info: str | None = None,
+    photo_file_id: str | None = None,
 ):
     return await asyncio.to_thread(create_note_sync, pet_id, title, period, extra_info, photo_file_id)
 
