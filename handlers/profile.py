@@ -1,5 +1,3 @@
-"""Обработчики раздела 'Профиль'."""
-
 from aiogram import types
 
 from db import requests as dbreq
@@ -35,29 +33,38 @@ async def on_text_profile(message: types.Message):
             await message.answer("Пока нет животных.", reply_markup=back_to_main_keyboard())
             return
 
-        text_out = ""
         for pet in pets:
-            text_out += (
+            pet_text = (
                 f"🐾 Питомец:\n"
                 f"Порода: {pet['breed']}\n"
                 f"Кличка: {pet['name']}\n"
                 f"Возраст: {pet['age']}\n"
                 f"Доп. информация: {pet['extra_info'] or '-'}\n"
-                f"Создан: {pet['created_at']}\n"
+                f"Фото: {'есть' if pet['photo_file_id'] else 'нет'}\n"
+                f"Создан: {pet['created_at']}"
             )
+
+            if pet["photo_file_id"]:
+                await message.answer_photo(photo=pet["photo_file_id"], caption=pet_text)
+            else:
+                await message.answer(pet_text)
 
             notes_response = await dbreq.list_notes_for_pet(pet["id"])
             if notes_response["status"] == "ok" and notes_response["data"]["notes"]:
-                text_out += "📌 Заметки:\n"
                 for note in notes_response["data"]["notes"]:
-                    text_out += (
-                        f"- {note['title']} (Период: {note['period']}, "
-                        f"Доп. инфо: {note['extra_info'] or '-'})\n"
+                    note_text = (
+                        f"📌 Заметка для питомца {pet['name']}:\n"
+                        f"Название: {note['title']}\n"
+                        f"Период: {note['period']}\n"
+                        f"Доп. инфо: {note['extra_info'] or '-'}\n"
+                        f"Фото: {'есть' if note['photo_file_id'] else 'нет'}"
                     )
+
+                    if note["photo_file_id"]:
+                        await message.answer_photo(photo=note["photo_file_id"], caption=note_text)
+                    else:
+                        await message.answer(note_text)
             else:
-                text_out += "Заметки отсутствуют\n"
+                await message.answer(f"У питомца {pet['name']} заметки отсутствуют.")
 
-            text_out += "\n"
-
-        await message.answer(text_out)
-        await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
+        await message.answer("", reply_markup=main_reply_keyboard())

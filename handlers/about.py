@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
-from keyboards.main_keyboards import back_to_main_keyboard
+from keyboards.main_keyboards import main_reply_keyboard
 
 
 async def about_project(message: types.Message, state: FSMContext):
@@ -19,4 +19,4 @@ async def about_project(message: types.Message, state: FSMContext):
         "Пишите: @ferrffil\n"
     )
 
-    await message.answer(text, reply_markup=back_to_main_keyboard())
+    await message.answer(text, reply_markup=main_reply_keyboard())
