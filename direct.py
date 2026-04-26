@@ -1,21 +1,15 @@
-import os
-
 file_dict = {
-    'config.py': 'config.py',
-    'bot.py': 'bot.py',
-
-    'models.py': 'db/models.py',
-    'requests.py': 'db/requests.py',
-
-    'hinit.py': 'handlers/__init__.py',
-    'start_inline.py': 'handlers/start_inline.py',
-    'notes_flow.py': 'handlers/notes_flow.py',
-    'pet_flow.py': 'handlers/pet_flow.py',
-    'profile.py': 'handlers/profile.py',
-
-    'main_keyboards.py': 'keyboards/main_keyboards.py',
-
-    'helpers.py': 'utils/helpers.py',
+    "config.py": "config.py",
+    "bot.py": "bot.py",
+    "models.py": "db/models.py",
+    "requests.py": "db/requests.py",
+    "hinit.py": "handlers/__init__.py",  # название-алиас, исторически выбрано автором
+    "start_inline.py": "handlers/start_inline.py",
+    "notes_flow.py": "handlers/notes_flow.py",
+    "pet_flow.py": "handlers/pet_flow.py",
+    "profile.py": "handlers/profile.py",
+    "main_keyboards.py": "keyboards/main_keyboards.py",
+    "helpers.py": "utils/helpers.py",
 }
 
 
@@ -29,9 +23,9 @@ def read_files(file_names):
         new_file_names = []
         for name in file_names:
             if name.startswith('.'):
-                for file in file_dict:
-                    if file.endswith(name):
-                        new_file_names.append(file)
+                for file_name in file_dict:
+                    if file_name.endswith(name):
+                        new_file_names.append(file_name)
             else:
                 new_file_names.append(name)
         file_names = new_file_names
@@ -46,8 +40,8 @@ def read_files(file_names):
                     combined_content += "\n\n"
             except FileNotFoundError:
                 combined_content += f"Файл {file_path} не найден\n\n"
-            except Exception as e:
-                combined_content += f"Ошибка при чтении файла {file_path}: {str(e)}\n\n"
+            except Exception as error:
+                combined_content += f"Ошибка при чтении файла {file_path}: {error}\n\n"
         else:
             combined_content += f"Файл {file_name} не найден в словаре\n\n"
 
