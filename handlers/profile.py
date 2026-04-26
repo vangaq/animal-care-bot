@@ -67,4 +67,4 @@ async def on_text_profile(message: types.Message):
             else:
                 await message.answer(f"У питомца {pet['name']} заметки отсутствуют.")
 
-        await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
+        await message.answer("", reply_markup=main_reply_keyboard())

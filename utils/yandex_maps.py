@@ -21,7 +21,8 @@ SEARCH_SPANS = [
 
 
 @dataclass(slots=True)
-class VetClinic:
+class NearbyPlace:
+    """Краткая информация о найденной организации рядом."""
     name: str
     address: str
     latitude: float
@@ -37,6 +38,10 @@ class VetClinic:
 
 class YandexMapsError(RuntimeError):
     """Ошибка работы с API Яндекс.Карт."""
+
+
+class YandexMapsConfigError(YandexMapsError):
+    """Ошибка конфигурации ключей для Яндекс.Карт."""
 
 
 def _extract_error_message_from_payload(payload: str) -> str:
@@ -141,18 +146,75 @@ def reverse_geocode(api_key: str, latitude: float, longitude: float) -> str:
     return str(meta.get("text") or geo_object.get("name") or "")
 
 
-def find_nearest_vet_clinics(
+def geocode_address(api_key: str, address: str) -> dict[str, Any]:
+    if not api_key:
+        raise YandexMapsConfigError(
+            "Для поиска по введённому адресу нужен ключ Geocoder API. "
+            "Добавьте в .env строку YANDEX_GEOCODER_API_KEY=ВАШ_КЛЮЧ"
+        )
+
+    clean_address = address.strip()
+    if not clean_address:
+        raise YandexMapsError("Адрес не должен быть пустым.")
+
+    data = _http_get_json(
+        GEOCODER_URL,
+        {
+            "apikey": api_key,
+            "geocode": clean_address,
+            "lang": "ru_RU",
+            "format": "json",
+            "results": 1,
+        },
+    )
+
+    collection = data.get("response", {}).get("GeoObjectCollection", {})
+    items = collection.get("featureMember", [])
+    if not items:
+        raise YandexMapsError(
+            "Не удалось распознать этот адрес. Попробуйте написать адрес подробнее: "
+            "город, улицу и номер дома."
+        )
+
+    geo_object = items[0].get("GeoObject", {})
+    point = geo_object.get("Point", {})
+    coordinates = str(point.get("pos") or "").split()
+    if len(coordinates) != 2:
+        raise YandexMapsError("Не удалось получить координаты по введённому адресу.")
+
+    longitude = float(coordinates[0])
+    latitude = float(coordinates[1])
+
+    meta = geo_object.get("metaDataProperty", {}).get("GeocoderMetaData", {})
+    formatted_address = (
+            meta.get("Address", {}).get("formatted")
+            or meta.get("text")
+            or geo_object.get("name")
+            or clean_address
+    )
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "address": str(formatted_address),
+    }
+
+
+def find_nearest_places(
         api_key: str,
         latitude: float,
         longitude: float,
+        search_text: str,
+        fallback_name: str,
         limit: int = 5,
-) -> tuple[list[VetClinic], int]:
+) -> tuple[list[NearbyPlace], int]:
     if not api_key:
-        raise YandexMapsError(
-            "Не указан ключ Places API. Добавьте в .env строку YANDEX_PLACES_API_KEY=ВАШ_КЛЮЧ"
+        raise YandexMapsConfigError(
+            "Не указан ключ Places API. Добавьте в .env строку "
+            "YANDEX_PLACES_API_KEY=ВАШ_КЛЮЧ"
         )
 
-    found_clinics: list[VetClinic] = []
+    found_places: list[NearbyPlace] = []
     chosen_zoom = 13
 
     for span_x, span_y, zoom in SEARCH_SPANS:
@@ -160,7 +222,7 @@ def find_nearest_vet_clinics(
             PLACES_URL,
             {
                 "apikey": api_key,
-                "text": "ветеринарная клиника",
+                "text": search_text,
                 "type": "biz",
                 "lang": "ru_RU",
                 "ll": f"{longitude},{latitude}",
@@ -171,22 +233,22 @@ def find_nearest_vet_clinics(
         )
 
         features = data.get("features", [])
-        parsed: list[VetClinic] = []
+        parsed: list[NearbyPlace] = []
         for feature in features:
             geometry = feature.get("geometry", {})
             coordinates = geometry.get("coordinates", [])
             if len(coordinates) != 2:
                 continue
 
-            clinic_longitude = float(coordinates[0])
-            clinic_latitude = float(coordinates[1])
+            place_longitude = float(coordinates[0])
+            place_latitude = float(coordinates[1])
             properties = feature.get("properties", {})
             company_meta = properties.get("CompanyMetaData", {})
 
             name = str(
                 company_meta.get("name")
                 or properties.get("name")
-                or "Ветеринарная клиника"
+                or fallback_name
             )
             address = str(
                 company_meta.get("address")
@@ -198,58 +260,58 @@ def find_nearest_vet_clinics(
             distance_meters = _haversine_distance_meters(
                 latitude,
                 longitude,
-                clinic_latitude,
-                clinic_longitude,
+                place_latitude,
+                place_longitude,
             )
             parsed.append(
-                VetClinic(
+                NearbyPlace(
                     name=name,
                     address=address,
-                    latitude=clinic_latitude,
-                    longitude=clinic_longitude,
+                    latitude=place_latitude,
+                    longitude=place_longitude,
                     distance_meters=distance_meters,
                 )
             )
 
-        parsed.sort(key=lambda clinic: clinic.distance_meters)
+        parsed.sort(key=lambda place: place.distance_meters)
 
-        unique: list[VetClinic] = []
+        unique: list[NearbyPlace] = []
         seen: set[tuple[str, str]] = set()
-        for clinic in parsed:
-            key = (clinic.name.casefold(), clinic.address.casefold())
+        for place in parsed:
+            key = (place.name.casefold(), place.address.casefold())
             if key in seen:
                 continue
             seen.add(key)
-            unique.append(clinic)
+            unique.append(place)
             if len(unique) >= limit:
                 break
 
         if unique:
-            found_clinics = unique
+            found_places = unique
             chosen_zoom = zoom
             break
 
-    if not found_clinics:
+    if not found_places:
         raise YandexMapsError(
-            "Рядом не удалось найти ветеринарные клиники. Попробуйте ещё раз в другом месте."
+            "Рядом не удалось найти подходящие места. Попробуйте указать другой адрес "
+            "или выполнить поиск ещё раз в другом месте."
         )
 
-    return found_clinics, chosen_zoom
+    return found_places, chosen_zoom
 
 
 def _build_static_map_viewport(
         latitude: float,
         longitude: float,
-        clinics: list[VetClinic],
+        places: list[NearbyPlace],
 ) -> tuple[str, str]:
-    longitudes = [longitude, *[clinic.longitude for clinic in clinics]]
-    latitudes = [latitude, *[clinic.latitude for clinic in clinics]]
+    longitudes = [longitude, *[place.longitude for place in places]]
+    latitudes = [latitude, *[place.latitude for place in places]]
 
     min_lon = min(longitudes)
     max_lon = max(longitudes)
     min_lat = min(latitudes)
     max_lat = max(latitudes)
-
     center_lon = (min_lon + max_lon) / 2
     center_lat = (min_lat + max_lat) / 2
 
@@ -262,13 +324,13 @@ def _build_static_map_viewport(
 def build_static_map_bytes(
         latitude: float,
         longitude: float,
-        clinics: list[VetClinic],
+        places: list[NearbyPlace],
 ) -> bytes:
-    ll, spn = _build_static_map_viewport(latitude, longitude, clinics)
+    ll, spn = _build_static_map_viewport(latitude, longitude, places)
 
     placemarks = [f"{longitude},{latitude},pm2blm"]
-    for index, clinic in enumerate(clinics, start=1):
-        placemarks.append(f"{clinic.longitude},{clinic.latitude},pm2rdm{index}")
+    for index, place in enumerate(places, start=1):
+        placemarks.append(f"{place.longitude},{place.latitude},pm2rdm{index}")
 
     return _http_get_bytes(
         STATIC_MAPS_URL,
@@ -287,16 +349,68 @@ def build_interactive_map_url(
         latitude: float,
         longitude: float,
         zoom: int,
+        search_text: str,
 ) -> str:
     query = urlencode(
         {
             "ll": f"{longitude},{latitude}",
             "z": zoom,
-            "text": "ветеринарная клиника",
+            "text": search_text,
         },
         quote_via=quote_plus,
     )
     return f"https://yandex.ru/maps/?{query}"
+
+
+def build_places_payload(
+        geocoder_api_key: str,
+        places_api_key: str,
+        latitude: float,
+        longitude: float,
+        search_text: str,
+        fallback_name: str,
+        origin_address: str = "",
+) -> dict[str, Any]:
+    address = origin_address or reverse_geocode(
+        api_key=geocoder_api_key,
+        latitude=latitude,
+        longitude=longitude,
+    )
+    places, zoom = find_nearest_places(
+        api_key=places_api_key,
+        latitude=latitude,
+        longitude=longitude,
+        search_text=search_text,
+        fallback_name=fallback_name,
+        limit=5,
+    )
+    map_image_bytes = build_static_map_bytes(
+        latitude=latitude,
+        longitude=longitude,
+        places=places,
+    )
+
+    return {
+        "address": address,
+        "places": [
+            {
+                "name": place.name,
+                "address": place.address,
+                "latitude": place.latitude,
+                "longitude": place.longitude,
+                "distance_meters": place.distance_meters,
+                "distance_text": place.distance_text,
+            }
+            for place in places
+        ],
+        "map_image_bytes": map_image_bytes,
+        "interactive_map_url": build_interactive_map_url(
+            latitude=latitude,
+            longitude=longitude,
+            zoom=zoom,
+            search_text=search_text,
+        ),
+    }
 
 
 def build_vet_clinics_payload(
@@ -305,36 +419,11 @@ def build_vet_clinics_payload(
         latitude: float,
         longitude: float,
 ) -> dict[str, Any]:
-    address = reverse_geocode(api_key=geocoder_api_key, latitude=latitude, longitude=longitude)
-    clinics, zoom = find_nearest_vet_clinics(
-        api_key=places_api_key,
+    return build_places_payload(
+        geocoder_api_key=geocoder_api_key,
+        places_api_key=places_api_key,
         latitude=latitude,
         longitude=longitude,
-        limit=5,
+        search_text="ветеринарная клиника",
+        fallback_name="Ветеринарная клиника",
     )
-    map_image_bytes = build_static_map_bytes(
-        latitude=latitude,
-        longitude=longitude,
-        clinics=clinics,
-    )
-
-    return {
-        "address": address,
-        "clinics": [
-            {
-                "name": clinic.name,
-                "address": clinic.address,
-                "latitude": clinic.latitude,
-                "longitude": clinic.longitude,
-                "distance_meters": clinic.distance_meters,
-                "distance_text": clinic.distance_text,
-            }
-            for clinic in clinics
-        ],
-        "map_image_bytes": map_image_bytes,
-        "interactive_map_url": build_interactive_map_url(
-            latitude=latitude,
-            longitude=longitude,
-            zoom=zoom,
-        ),
-    }

@@ -372,6 +372,7 @@ async def create_note(
 ):
     return await asyncio.to_thread(create_note_sync, pet_id, title, period, extra_info, photo_file_id)
 
+
 async def get_note_by_id(note_id: int):
     return await asyncio.to_thread(get_note_by_id_sync, note_id)
 

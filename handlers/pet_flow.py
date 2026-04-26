@@ -81,7 +81,7 @@ async def pet_age(message: types.Message, state: FSMContext):
 
     await state.update_data(age=age)
     await message.answer(
-        "Введите доп. информацию (или напишите «Нет»). После этого можно будет добавить фото:",
+        "Введите доп. информацию (или напишите «Нет»).",
         reply_markup=types.ReplyKeyboardRemove(),
     )
     await state.set_state(PetStates.waiting_extra)
@@ -151,11 +151,10 @@ async def pet_confirm(message: types.Message, state: FSMContext):
         )
 
         if create_response["status"] == "ok":
-            await message.answer("Питомец добавлен 🐾")
-            await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
+            await message.answer("Питомец добавлен 🐾", reply_markup=main_reply_keyboard())
         else:
-            await message.answer("Ошибка при добавлении питомца: " + create_response.get("error_msg", ""))
-            await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
+            await message.answer("Ошибка при добавлении питомца: " + create_response.get("error_msg", ""),
+                                 reply_markup=main_reply_keyboard())
 
         await state.clear()
         return

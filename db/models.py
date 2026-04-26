@@ -53,7 +53,7 @@ class Note(Base):
     period = Column(String, nullable=False)
 
     extra_info = Column(String, nullable=True)
-    photo_file_id = Column(String, nullable=True)  # file_id фото из Telegram
+    photo_file_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     pet = relationship("Pet", back_populates="notes")

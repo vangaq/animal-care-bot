@@ -60,10 +60,11 @@ from handlers.pet_flow import (
 from handlers.profile import on_text_profile
 from handlers.start_inline import cmd_inline, cmd_start
 from handlers.vet_clinics import (
-    VetClinicsStates,
-    location_expected_text,
+    MapSearchStates,
+    process_user_address,
     process_user_location,
-    start_vet_clinics_search,
+    start_category_search,
+    start_maps_menu,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -131,9 +132,14 @@ dp.message.register(delete_note_choose_pet, DeleteNoteStates.waiting_pet, F.text
 dp.message.register(delete_note_choose_note, DeleteNoteStates.waiting_note, F.text)
 dp.message.register(delete_note_confirm, DeleteNoteStates.waiting_confirm, F.text)
 
-dp.message.register(start_vet_clinics_search, F.text.casefold() == "ветклиники рядом", StateFilter("*"))
-dp.message.register(process_user_location, VetClinicsStates.waiting_location, F.location)
-dp.message.register(location_expected_text, VetClinicsStates.waiting_location, F.text)
+dp.message.register(start_maps_menu, F.text.casefold() == "карта", StateFilter("*"))
+dp.message.register(
+    start_category_search,
+    F.text.casefold().in_({"ветклиники рядом", "зоомагазины рядом", "груминг рядом"}),
+    StateFilter("*"),
+)
+dp.message.register(process_user_location, MapSearchStates.waiting_location, F.location)
+dp.message.register(process_user_address, MapSearchStates.waiting_location, F.text)
 
 dp.message.register(about_project, F.text.casefold() == "о нас", StateFilter("*"))
 

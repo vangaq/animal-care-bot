@@ -5,7 +5,7 @@ def main_reply_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
             [types.KeyboardButton(text="О нас"), types.KeyboardButton(text="Профиль")],
-            [types.KeyboardButton(text="Заметки"), types.KeyboardButton(text="Ветклиники рядом")],
+            [types.KeyboardButton(text="Заметки"), types.KeyboardButton(text="Карта")],
         ],
         resize_keyboard=True,
     )
@@ -63,7 +63,18 @@ def notes_menu_keyboard() -> types.ReplyKeyboardMarkup:
     )
 
 
-def location_request_keyboard() -> types.ReplyKeyboardMarkup:
+def map_categories_keyboard() -> types.ReplyKeyboardMarkup:
+    return types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="Ветклиники рядом"), types.KeyboardButton(text="Зоомагазины рядом")],
+            [types.KeyboardButton(text="Груминг рядом")],
+            [types.KeyboardButton(text="На главную")],
+        ],
+        resize_keyboard=True,
+    )
+
+
+def map_input_keyboard() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(
         keyboard=[
             [types.KeyboardButton(text="Отправить местоположение", request_location=True)],
@@ -72,3 +83,7 @@ def location_request_keyboard() -> types.ReplyKeyboardMarkup:
         resize_keyboard=True,
         one_time_keyboard=True,
     )
+
+
+def location_request_keyboard() -> types.ReplyKeyboardMarkup:
+    return map_input_keyboard()

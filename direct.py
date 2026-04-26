@@ -3,7 +3,7 @@ file_dict = {
     "bot.py": "bot.py",
     "models.py": "db/models.py",
     "requests.py": "db/requests.py",
-    "hinit.py": "handlers/__init__.py",
+    "hinit.py": "handlers/__init__.py",  # название-алиас, исторически выбрано автором
     "start_inline.py": "handlers/start_inline.py",
     "notes_flow.py": "handlers/notes_flow.py",
     "pet_flow.py": "handlers/pet_flow.py",

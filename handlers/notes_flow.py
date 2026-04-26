@@ -178,7 +178,7 @@ async def note_period(message: types.Message, state: FSMContext):
 
     await state.update_data(period=message.text)
     await message.answer(
-        "Введите доп. информацию (или «Нет»). После этого можно будет добавить фото:",
+        "Введите доп. информацию (или напишите «Нет»).",
         reply_markup=types.ReplyKeyboardRemove(),
     )
     await state.set_state(NoteStates.waiting_extra)
@@ -233,8 +233,7 @@ async def note_confirm(message: types.Message, state: FSMContext):
         )
 
         if response["status"] == "ok":
-            await message.answer("Заметка добавлена 📝")
-            await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
+            await message.answer("Заметка добавлена 📝", reply_markup=main_reply_keyboard())
         else:
             await message.answer("Ошибка: " + response.get("error_msg", ""))
 
