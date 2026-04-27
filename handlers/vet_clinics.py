@@ -49,6 +49,7 @@ class MapSearchStates(StatesGroup):
 
 
 async def start_maps_menu(message: types.Message, state: FSMContext):
+    """Открывает меню раздела карты."""
     await state.clear()
     await message.answer(
         "Выберите, что нужно найти рядом:",
@@ -57,6 +58,7 @@ async def start_maps_menu(message: types.Message, state: FSMContext):
 
 
 async def start_category_search(message: types.Message, state: FSMContext):
+    """Запоминает выбранную категорию и просит пользователя прислать адрес или геолокацию."""
     category_key = message.text.lower()
     category = MAP_CATEGORIES.get(category_key)
     if category is None:
@@ -74,6 +76,7 @@ async def start_category_search(message: types.Message, state: FSMContext):
 
 
 async def process_user_location(message: types.Message, state: FSMContext):
+    """Обрабатывает координаты пользователя и отправляет карту с найденными местами."""
     location = message.location
     if location is None:
         await message.answer("Не удалось получить координаты. Попробуйте ещё раз.")
@@ -89,6 +92,7 @@ async def process_user_location(message: types.Message, state: FSMContext):
 
 
 async def process_user_address(message: types.Message, state: FSMContext):
+    """Обрабатывает адрес, введённый вручную."""
     geocoder_key = YANDEX_GEOCODER_API_KEY
 
     address_text = (message.text or "").strip()
@@ -108,7 +112,6 @@ async def process_user_address(message: types.Message, state: FSMContext):
         await wait_message.edit_text(
             f"{error}\n\n"
             "Для ручного ввода адреса нужен Geocoder API.\n"
-            "Но поиск по геолокации можно использовать уже сейчас, если отправить точку кнопкой ниже."
         )
         return
     except YandexMapsError as error:
@@ -141,6 +144,7 @@ async def _process_places_search(
         longitude: float,
         address_line: str,
 ):
+    """Делает поиск организаций и отправляет пользователю карту."""
     data = await state.get_data()
     category_key = data.get("category_key")
     category = MAP_CATEGORIES.get(category_key or "")
@@ -157,11 +161,7 @@ async def _process_places_search(
 
     if not places_key:
         await message.answer(
-            "Не найден ключ Places API.\n\n"
-            "В .env нужно добавить минимум:\n"
-            "YANDEX_PLACES_API_KEY=ВАШ_КЛЮЧ_ОТ_PLACES_API\n\n"
-            "Для ручного ввода адреса и красивого определения адреса по точке дополнительно можно указать:\n"
-            "YANDEX_GEOCODER_API_KEY=ВАШ_КЛЮЧ_ОТ_GEOCODER",
+            "Не найден ключ Places API.",
             reply_markup=main_reply_keyboard(),
         )
         await state.clear()
@@ -182,13 +182,7 @@ async def _process_places_search(
         )
     except Exception as error:  # noqa: BLE001 - пользователю нужен понятный ответ
         await wait_message.edit_text(
-            "Не удалось получить данные от Яндекс.Карт.\n\n"
-            f"Причина: {error}\n\n"
-            "Проверьте, что:\n"
-            "1) ключ Places API записан без кавычек и скобок;\n"
-            "2) если ключ только что создан, прошло хотя бы 15 минут;\n"
-            "3) для поиска организаций используется именно ключ Places API;\n"
-            "4) для ручного ввода адреса указан ключ Geocoder API."
+            "Не удалось получить данные от Яндекс.Карт."
         )
         await message.answer("Главное меню:", reply_markup=main_reply_keyboard())
         await state.clear()

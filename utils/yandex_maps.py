@@ -13,7 +13,6 @@ GEOCODER_URL = "https://geocode-maps.yandex.ru/v1"
 PLACES_URL = "https://search-maps.yandex.ru/v1"
 STATIC_MAPS_URL = "https://static-maps.yandex.ru/1.x"
 
-# Набор областей поиска: от маленькой к более широкой.
 SEARCH_SPANS = [
     (0.03, 0.03, 15),
     (0.06, 0.06, 14),
@@ -24,6 +23,7 @@ SEARCH_SPANS = [
 
 @dataclass(slots=True)
 class NearbyPlace:
+    """Краткая информация о найденной организации рядом."""
     name: str
     address: str
     latitude: float
@@ -39,10 +39,15 @@ class NearbyPlace:
 
 class YandexMapsError(RuntimeError):
     """Ошибка работы с API Яндекс.Карт."""
+    def __init__(self, message="Ошибка работы с API Яндекс.Карт."):
+        super().__init__(message)
+        print(f"[YANDEX MAPS ERROR] {message}")
 
 
 class YandexMapsConfigError(YandexMapsError):
     """Ошибка конфигурации ключей для Яндекс.Карт."""
+    def __init__(self, message="Ошибка конфигурации ключей для Яндекс.Карт."):
+        super().__init__(message)
 
 
 def _extract_error_message_from_payload(payload: str) -> str:
@@ -61,7 +66,7 @@ def _http_get_json(base_url: str, params: dict[str, Any]) -> dict[str, Any]:
     url = f"{base_url}?{query}"
 
     try:
-        with urlopen(url, timeout=20) as response:  # nosec B310 - URL формируется из констант
+        with urlopen(url, timeout=20) as response:
             payload = response.read().decode("utf-8")
     except HTTPError as error:
         payload = error.read().decode("utf-8", errors="replace")
@@ -69,8 +74,7 @@ def _http_get_json(base_url: str, params: dict[str, Any]) -> dict[str, Any]:
 
         if error.code == 403:
             raise YandexMapsError(
-                "HTTP 403 Forbidden. Обычно это значит, что указан неверный ключ для этого сервиса. "
-                "Для geocode-maps нужен ключ Geocoder, а для search-maps нужен отдельный ключ Places API. "
+                "HTTP 403 Forbidden."
                 f"Ответ Яндекса: {message}"
             ) from error
 
@@ -90,7 +94,7 @@ def _http_get_bytes(base_url: str, params: dict[str, Any]) -> bytes:
     url = f"{base_url}?{query}"
 
     try:
-        with urlopen(url, timeout=20) as response:  # nosec B310 - URL формируется из констант
+        with urlopen(url, timeout=20) as response:
             return response.read()
     except HTTPError as error:
         payload = error.read().decode("utf-8", errors="replace")
@@ -106,6 +110,7 @@ def _haversine_distance_meters(
     latitude_2: float,
     longitude_2: float,
 ) -> float:
+    """Считает расстояние между двумя точками по формуле гаверсинуса."""
     radius = 6_371_000
 
     lat1 = math.radians(latitude_1)
@@ -119,6 +124,7 @@ def _haversine_distance_meters(
 
 
 def reverse_geocode(api_key: str, latitude: float, longitude: float) -> str:
+    """Возвращает читаемый адрес пользователя по координатам."""
     if not api_key:
         return ""
 
@@ -148,6 +154,7 @@ def reverse_geocode(api_key: str, latitude: float, longitude: float) -> str:
 
 
 def geocode_address(api_key: str, address: str) -> dict[str, Any]:
+    """Преобразует введённый пользователем адрес в координаты."""
     if not api_key:
         raise YandexMapsConfigError(
             "Для поиска по введённому адресу нужен ключ Geocoder API. "
@@ -209,6 +216,7 @@ def find_nearest_places(
     fallback_name: str,
     limit: int = 5,
 ) -> tuple[list[NearbyPlace], int]:
+    """Ищет ближайшие организации указанного типа вокруг пользователя."""
     if not api_key:
         raise YandexMapsConfigError(
             "Не указан ключ Places API. Добавьте в .env строку "
@@ -306,6 +314,7 @@ def _build_static_map_viewport(
     longitude: float,
     places: list[NearbyPlace],
 ) -> tuple[str, str]:
+    """Подбирает ll и spn так, чтобы на карте были видны пользователь и найденные точки."""
     longitudes = [longitude, *[place.longitude for place in places]]
     latitudes = [latitude, *[place.latitude for place in places]]
 
@@ -328,6 +337,7 @@ def build_static_map_bytes(
     longitude: float,
     places: list[NearbyPlace],
 ) -> bytes:
+    """Строит PNG-карту с точкой пользователя и ближайшими организациями."""
     ll, spn = _build_static_map_viewport(latitude, longitude, places)
 
     placemarks = [f"{longitude},{latitude},pm2blm"]
@@ -353,6 +363,7 @@ def build_interactive_map_url(
     zoom: int,
     search_text: str,
 ) -> str:
+    """Собирает внешнюю ссылку на интерактивные Яндекс.Карты."""
     query = urlencode(
         {
             "ll": f"{longitude},{latitude}",
@@ -373,6 +384,7 @@ def build_places_payload(
     fallback_name: str,
     origin_address: str = "",
 ) -> dict[str, Any]:
+    """Готовит все данные для ответа бота одним вызовом."""
     address = origin_address or reverse_geocode(
         api_key=geocoder_api_key,
         latitude=latitude,

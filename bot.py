@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import suppress
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, StateFilter
@@ -20,16 +21,20 @@ from handlers.notes_flow import (
     edit_note_choose_field,
     edit_note_choose_note,
     edit_note_choose_pet,
+    edit_note_custom_period,
     edit_note_new_period,
+    edit_note_reminder_mode,
     edit_note_new_photo,
     edit_note_new_value,
     note_choose_pet,
     note_confirm,
+    note_custom_period,
     note_extra_photo,
     note_extra_text,
     note_period,
     note_photo_input,
     note_photo_text,
+    note_reminder_mode,
     note_title,
     start_add_note,
     start_delete_note,
@@ -54,12 +59,13 @@ from handlers.pet_flow import (
     pet_name,
     pet_photo_input,
     pet_photo_text,
+    pet_species,
     start_add_pet,
     start_delete_pet,
     start_edit_pet,
 )
-from handlers.profile import on_text_profile
-from handlers.start_inline import cmd_inline, cmd_start
+from handlers.profile import ProfileStates, on_text_profile, save_changed_owner_name, start_change_owner_name
+from handlers.start_inline import StartStates, cmd_help, cmd_inline, cmd_start, save_owner_name
 from handlers.vet_clinics import (
     MapSearchStates,
     process_user_address,
@@ -67,12 +73,13 @@ from handlers.vet_clinics import (
     start_category_search,
     start_maps_menu,
 )
+from utils.reminders import reminder_worker
 
 logging.basicConfig(level=logging.INFO)
 
 if not BOT_TOKEN:
     raise RuntimeError(
-        "BOT_TOKEN не задан. Создайте файл .env и укажите в нём BOT_TOKEN=..."
+        "BOT_TOKEN не задан."
     )
 
 bot = Bot(token=BOT_TOKEN)
@@ -80,15 +87,24 @@ dp = Dispatcher(storage=MemoryStorage())
 
 init_db()
 
+# Команды
 dp.message.register(cmd_start, Command(commands=["start"]))
+dp.message.register(cmd_help, Command(commands=["help"]))
 dp.message.register(cmd_inline, Command(commands=["inline"]))
+dp.message.register(save_owner_name, StartStates.waiting_owner_name, F.text)
+dp.message.register(save_changed_owner_name, ProfileStates.waiting_owner_name, F.text)
 
+# Глобальный возврат в меню
 dp.message.register(cancel_handler, F.text.casefold() == "на главную", StateFilter("*"))
+dp.message.register(cancel_handler, F.text.casefold() == "отмена", StateFilter("*"))
 
+# Сценарий общения с AI
 dp.message.register(start_ai_chat, F.text.casefold() == "посоветоваться с ai", StateFilter("*"))
 dp.message.register(process_ai_message, AIChatStates.waiting_question)
 
+# Сценарий добавления питомца
 dp.message.register(start_add_pet, F.text.casefold() == "добавить питомца", StateFilter("*"))
+dp.message.register(pet_species, PetStates.waiting_species, F.text)
 dp.message.register(pet_breed, PetStates.waiting_breed, F.text)
 dp.message.register(pet_name, PetStates.waiting_name, F.text)
 dp.message.register(pet_age, PetStates.waiting_age, F.text)
@@ -98,6 +114,7 @@ dp.message.register(pet_photo_text, PetStates.waiting_photo, F.text)
 dp.message.register(pet_photo_input, PetStates.waiting_photo, F.photo)
 dp.message.register(pet_confirm, PetStates.confirm, F.text)
 
+# Сценарий редактирования питомца
 dp.message.register(
     start_edit_pet,
     F.text.casefold() == "изм. данные питомца",
@@ -108,17 +125,21 @@ dp.message.register(field_choice, EditPetStates.waiting_field_choice, F.text)
 dp.message.register(new_value_input, EditPetStates.waiting_new_value, F.text)
 dp.message.register(new_pet_photo_input, EditPetStates.waiting_new_photo, F.photo)
 
+# Сценарий удаления питомца
 dp.message.register(start_delete_pet, F.text.casefold() == "удалить питомца", StateFilter("*"))
 dp.message.register(choose_pet_to_delete, DeletePetStates.waiting_choose_pet, F.text)
 dp.message.register(confirm_pet_delete, DeletePetStates.waiting_confirm, F.text)
 
+# Раздел заметок
 dp.message.register(start_notes, F.text.casefold() == "заметки", StateFilter("*"))
 dp.message.register(start_add_note, F.text.casefold() == "добавить заметку")
 dp.message.register(start_edit_note, F.text.casefold() == "изменить заметку")
 dp.message.register(start_delete_note, F.text.casefold() == "удалить заметку")
 dp.message.register(note_choose_pet, NoteStates.waiting_pet, F.text)
 dp.message.register(note_title, NoteStates.waiting_title, F.text)
+dp.message.register(note_reminder_mode, NoteStates.waiting_reminder_mode, F.text)
 dp.message.register(note_period, NoteStates.waiting_period, F.text)
+dp.message.register(note_custom_period, NoteStates.waiting_custom_period, F.text)
 dp.message.register(note_extra_text, NoteStates.waiting_extra, F.text)
 dp.message.register(note_extra_photo, NoteStates.waiting_extra, F.photo)
 dp.message.register(note_photo_text, NoteStates.waiting_photo, F.text)
@@ -129,13 +150,16 @@ dp.message.register(edit_note_choose_pet, EditNoteStates.waiting_pet, F.text)
 dp.message.register(edit_note_choose_note, EditNoteStates.waiting_note, F.text)
 dp.message.register(edit_note_choose_field, EditNoteStates.waiting_field, F.text)
 dp.message.register(edit_note_new_value, EditNoteStates.waiting_value, F.text)
+dp.message.register(edit_note_reminder_mode, EditNoteStates.waiting_reminder_mode, F.text)
 dp.message.register(edit_note_new_period, EditNoteStates.waiting_period, F.text)
+dp.message.register(edit_note_custom_period, EditNoteStates.waiting_custom_period, F.text)
 dp.message.register(edit_note_new_photo, EditNoteStates.waiting_photo, F.photo)
 
 dp.message.register(delete_note_choose_pet, DeleteNoteStates.waiting_pet, F.text)
 dp.message.register(delete_note_choose_note, DeleteNoteStates.waiting_note, F.text)
 dp.message.register(delete_note_confirm, DeleteNoteStates.waiting_confirm, F.text)
 
+# Раздел карты
 dp.message.register(start_maps_menu, F.text.casefold() == "карта", StateFilter("*"))
 dp.message.register(
     start_category_search,
@@ -146,12 +170,19 @@ dp.message.register(process_user_location, MapSearchStates.waiting_location, F.l
 dp.message.register(process_user_address, MapSearchStates.waiting_location, F.text)
 
 dp.message.register(about_project, F.text.casefold() == "о нас", StateFilter("*"))
+dp.message.register(start_change_owner_name, F.text.casefold() == "изменить имя", StateFilter("*"))
 
 dp.message.register(on_text_profile, F.text)
 
 
 async def main():
-    await dp.start_polling(bot)
+    reminder_task = asyncio.create_task(reminder_worker(bot))
+    try:
+        await dp.start_polling(bot)
+    finally:
+        reminder_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await reminder_task
 
 
 if __name__ == "__main__":

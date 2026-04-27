@@ -1,8 +1,5 @@
-"""Обработчик раздела 'О нас'."""
-
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-
 from keyboards.main_keyboards import main_reply_keyboard
 
 
@@ -21,7 +18,7 @@ async def about_project(message: types.Message, state: FSMContext):
         "• пользоваться картой для поиска нужных мест\n"
         "• хранить и редактировать данные профиля\n\n"
         "Есть идеи или предложения?\n"
-        "Пишите: @ferrffil\n"
+        "Пишите: vokyg222@mail.rul\n"
     )
 
     await message.answer(text, reply_markup=main_reply_keyboard())

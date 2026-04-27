@@ -8,11 +8,15 @@ from urllib.request import Request, urlopen
 from config import AI_MODEL, AI_SERVER_URL, AI_SYSTEM_PROMPT, AI_TIMEOUT_SECONDS
 
 
-def _post_chat_completion(user_text: str) -> str:
+def _post_chat_completion(user_text: str, extra_system_prompt: str = "") -> str:
+    system_prompt = AI_SYSTEM_PROMPT
+    if extra_system_prompt:
+        system_prompt = f"{system_prompt}\n\n{extra_system_prompt}"
+
     payload = {
         "model": AI_MODEL,
         "messages": [
-            {"role": "system", "content": AI_SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_text},
         ],
         "temperature": 0.7,
@@ -55,5 +59,6 @@ def _post_chat_completion(user_text: str) -> str:
         )
 
 
-async def ask_local_ai(user_text: str) -> str:
-    return await asyncio.to_thread(_post_chat_completion, user_text)
+async def ask_local_ai(user_text: str, extra_system_prompt: str = "") -> str:
+    """Выполняет запрос к AI в отдельном потоке, чтобы не блокировать бота."""
+    return await asyncio.to_thread(_post_chat_completion, user_text, extra_system_prompt)
